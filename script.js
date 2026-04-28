@@ -355,10 +355,18 @@ function awardFourStarWeaponCorals(run) {
 function convertCoralsToBannerTides(run, banner) {
   const creatable = Math.floor(run.resources.corals / 8);
   if (creatable <= 0) return false;
+
   run.resources.corals -= creatable * 8;
   run.stats.coralsSpent += creatable * 8;
-  if (banner === "character") run.resources.radiant += creatable;
-  else run.resources.forging += creatable;
+
+  if (banner === "character") {
+    run.resources.radiant += creatable;
+    run.stats.tidesUsed.coral_character += creatable;
+  } else {
+    run.resources.forging += creatable;
+    run.stats.tidesUsed.coral_weapon += creatable;
+  }
+
   return true;
 }
 
@@ -369,16 +377,18 @@ function consumePullToken(run, banner, includeCoralConversion) {
       run.stats.tidesUsed.radiant += 1;
       return true;
     }
+
     if (run.resources.astriteTides > 0) {
       run.resources.astriteTides -= 1;
       run.stats.tidesUsed.astrite_character += 1;
       return true;
     }
+
     if (includeCoralConversion && convertCoralsToBannerTides(run, "character")) {
       run.resources.radiant -= 1;
-      run.stats.tidesUsed.coral_character += 1;
       return true;
     }
+
     return false;
   }
 
@@ -387,16 +397,18 @@ function consumePullToken(run, banner, includeCoralConversion) {
     run.stats.tidesUsed.forging += 1;
     return true;
   }
+
   if (run.resources.astriteTides > 0) {
     run.resources.astriteTides -= 1;
     run.stats.tidesUsed.astrite_weapon += 1;
     return true;
   }
+
   if (includeCoralConversion && convertCoralsToBannerTides(run, "weapon")) {
     run.resources.forging -= 1;
-    run.stats.tidesUsed.coral_weapon += 1;
     return true;
   }
+
   return false;
 }
 
