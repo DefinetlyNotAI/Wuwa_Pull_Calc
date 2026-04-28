@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resource Tide Estimator</title>
+  <link rel="icon" type="image/png" href="icons/astrite.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <h1>Resource Tide Estimator</h1>
+    <div class="top-links">
+      <a class="secondary link-btn" href="index.html"><i data-lucide="line-chart"></i> Main calculator</a>
+      <a class="secondary link-btn" href="estimate.html"><i data-lucide="wallet"></i> Resource estimator</a>
+    </div>
+
+    <section class="panel">
+      <h2>Inputs</h2>
+      <div class="input-rows">
+        <div class="input-row">
+          <label>
+            <span class="field-label"><i data-lucide="target"></i> Estimate for</span>
+            <select id="targetBanner">
+              <option value="character">Radiant pulls</option>
+              <option value="weapon">Forging pulls</option>
+            </select>
+          </label>
+          <div></div>
+        </div>
+
+        <div class="input-row">
+          <label>
+            <span class="field-label">
+              <img class="input-icon" src="icon/rtide.png" alt="" onerror="this.onerror=null;this.src='icons/rtide.png'" /> Radiant tides
+            </span>
+            <input id="radiantTides" type="number" min="0" value="0" />
+          </label>
+          <label>
+            <span class="field-label">
+              <img class="input-icon" src="icon/ftide.png" alt="" onerror="this.onerror=null;this.src='icons/ftide.png'" /> Forging tides
+            </span>
+            <input id="forgingTides" type="number" min="0" value="0" />
+          </label>
+        </div>
+
+        <div class="input-row">
+          <label>
+            <span class="field-label">
+              <img class="input-icon" src="icon/astrite.png" alt="" onerror="this.onerror=null;this.src='icons/astrite.png'" /> Astrites
+            </span>
+            <input id="astrites" type="number" min="0" value="0" />
+          </label>
+          <div></div>
+        </div>
+      </div>
+      <div style="margin-top: 12px;">
+        <button id="calculateBtn" class="primary">Calculate</button>
+        <span id="statusText" class="status"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Output</h2>
+      <div id="resultTable"></div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="estimate.js"></script>
+</body>
+</html>

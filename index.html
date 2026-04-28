@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dual Banner Probability Calculator</title>
+  <link rel="icon" type="image/png" href="icons/astrite.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+  <body>
+    <main class="app">
+      <h1>Dual Banner Probability Calculator</h1>
+      <div class="top-links">
+        <a class="secondary link-btn" href="index.html"><i data-lucide="line-chart"></i> Main calculator</a>
+        <a class="secondary link-btn" href="estimate.html"><i data-lucide="wallet"></i> Resource estimator</a>
+      </div>
+
+    <section class="panel">
+      <h2>1. Inputs</h2>
+      <form id="input-form">
+        <div class="input-rows">
+          <div class="input-row">
+            <label>
+              <span class="field-label">
+                <img class="input-icon" src="icon/astrite.png" alt="" onerror="this.onerror=null;this.src='icons/astrite.png'" /> Character pity
+              </span>
+              <input id="characterPity" type="number" min="0" max="79" value="0" />
+            </label>
+            <label>
+              <span class="field-label">
+                <img class="input-icon" src="icon/astrite.png" alt="" onerror="this.onerror=null;this.src='icons/astrite.png'" /> Weapon pity
+              </span>
+              <input id="weaponPity" type="number" min="0" max="79" value="0" />
+            </label>
+          </div>
+
+          <div class="input-row">
+            <label>
+              <span class="field-label">
+                <img class="input-icon" src="icon/rtide.png" alt="" onerror="this.onerror=null;this.src='icons/rtide.png'" /> Radiant tides
+              </span>
+              <input id="radiantTides" type="number" min="0" value="0" />
+            </label>
+            <label>
+              <span class="field-label">
+                <img class="input-icon" src="icon/ftide.png" alt="" onerror="this.onerror=null;this.src='icons/ftide.png'" /> Forging tides
+              </span>
+              <input id="forgingTides" type="number" min="0" value="0" />
+            </label>
+          </div>
+
+          <div class="input-row">
+            <label>
+              <span class="field-label">
+                <img class="input-icon" src="icon/astrite.png" alt="" onerror="this.onerror=null;this.src='icons/astrite.png'" /> Astrites
+              </span>
+              <input id="astrites" type="number" min="0" value="0" />
+            </label>
+            <label>
+              <span class="field-label">
+                <img class="input-icon" src="icon/coral.png" alt="" onerror="this.onerror=null;this.src='icons/coral.png'" /> Afterglow corals
+              </span>
+              <input id="corals" type="number" min="0" value="0" />
+            </label>
+          </div>
+
+          <div class="input-row toggles-row">
+            <label class="checkbox-row">
+              <input id="includeCoralConversion" type="checkbox" checked />
+              Include coral-to-pull recursion
+            </label>
+            <label class="checkbox-row">
+              <input id="useAdvancedDefaults" type="checkbox" />
+              Use default advanced assumptions
+            </label>
+          </div>
+        </div>
+
+        <h3 class="wishlist-title">Wishlist (ordered)</h3>
+        <div class="wishlist-controls">
+          <button id="addCharacterItemBtn" type="button" class="secondary">
+            <i data-lucide="user-plus"></i> Add character
+          </button>
+          <button id="addWeaponItemBtn" type="button" class="secondary">
+            <i data-lucide="sword"></i> Add weapon
+          </button>
+          <button id="clearWishlistBtn" type="button" class="secondary">
+            <i data-lucide="trash-2"></i> Clear
+          </button>
+        </div>
+        <div id="wishlistEditor" class="wishlist-editor"></div>
+
+        <hr class="section-sep" />
+        <details id="advancedSettings" class="advanced">
+          <summary>
+            <i data-lucide="sliders-horizontal"></i>
+            Advanced settings
+          </summary>
+          <p class="hint advanced-hint">
+            If "Use default advanced assumptions" is enabled, this section is ignored
+            (assumes standard 5★ and all 4★ are C6, character 50/50 state is normal, and 4★ rates use equal-odds mode).
+          </p>
+          <div class="grid">
+            <label>Character 50/50 state
+              <select id="char5050State">
+                <option value="normal">Normal (next is 50/50)</option>
+                <option value="guaranteed">Lost previous 50/50 (next guaranteed)</option>
+              </select>
+            </label>
+            <label>Monte Carlo iterations
+              <input id="iterations" type="number" min="10000" step="1000" value="10000" />
+            </label>
+            <label>Character 4★ pity
+              <div style="display: flex; align-items: center; gap: 7px;">
+                <img class="input-icon" src="icon/coral.png" alt="" onerror="this.onerror=null;this.src='icons/coral.png'" />
+                <input id="characterPity4" type="number" min="0" max="9" value="0" />
+              </div>
+            </label>
+            <label>Weapon 4★ pity
+              <div style="display: flex; align-items: center; gap: 7px;">
+                <img class="input-icon" src="icon/coral.png" alt="" onerror="this.onerror=null;this.src='icons/coral.png'" />
+                <input id="weaponPity4" type="number" min="0" max="9" value="0" />
+              </div>
+            </label>
+            <label>4★ rate-up character 1
+              <select id="fourStarRateup1">
+                <option value="none">None (equal 4★ odds)</option>
+              </select>
+            </label>
+            <label>4★ rate-up character 2
+              <select id="fourStarRateup2">
+                <option value="none">None (equal 4★ odds)</option>
+              </select>
+            </label>
+            <label>4★ rate-up character 3
+              <select id="fourStarRateup3">
+                <option value="none">None (equal 4★ odds)</option>
+              </select>
+            </label>
+          </div>
+
+          <h3>Character dupe states (C0-C6)</h3>
+          <div id="char-dupes" class="dupe-grid"></div>
+
+          <h3>4-star dupe states (C0-C6)</h3>
+          <div id="fourstar-dupes" class="dupe-grid"></div>
+        </details>
+
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>2. Calculate</h2>
+      <button id="calculateBtn" class="primary">Calculate</button>
+      <span id="statusText" class="status"></span>
+    </section>
+
+    <section class="panel">
+      <h2>3. Graph visualization</h2>
+      <div class="chart-wrap">
+        <canvas id="probabilityChart" width="1100" height="430"></canvas>
+        <div id="chartTooltip" class="chart-tooltip"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>4. Wishlist probability table</h2>
+      <div id="wishlistTableContainer"></div>
+    </section>
+
+    <section class="panel">
+      <h2>5. Resource breakdown</h2>
+      <div id="resourceBreakdown"></div>
+      <div id="summaryStats"></div>
+    </section>
+
+    <section class="panel">
+      <h2>6. Debug panel</h2>
+      <details>
+        <summary>Show simulation internals and sample trace</summary>
+        <pre id="debugOutput"></pre>
+      </details>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="script.js"></script>
+</body>
+</html>
