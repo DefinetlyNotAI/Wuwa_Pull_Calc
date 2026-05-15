@@ -29,7 +29,9 @@ const DEFAULT_STATE = {
   fourStarRateups: [...DEFAULT_FOUR_STAR_RATEUPS],
   charDupes: Object.fromEntries(STANDARD_FIVE_STARS.map((n) => [n, 0])),
   fourStarDupes: Object.fromEntries(FOUR_STAR_NAMES.map((n) => [n, 0])),
-  wishlist: []
+  wishlist: [],
+  wishlistEntries: [],
+  wishlistNames: []
 };
 
 const uiState = { wishlist: [] };
@@ -138,6 +140,39 @@ function normalizeWishlistList(list) {
     .filter((s) => s === "character" || s === "weapon");
 }
 
+function normalizeWishlistType(value) {
+  const type = String(value || "").trim().toLowerCase();
+  return type === "character" || type === "weapon" ? type : null;
+}
+
+function sanitizeWishlistLabel(value) {
+  return String(value || "").trim().slice(0, 80);
+}
+
+function normalizeWishlistEntries(list) {
+  if (!Array.isArray(list)) return [];
+  const normalized = [];
+  for (let i = 0; i < list.length; i += 1) {
+    const entry = list[i];
+    const type = normalizeWishlistType(typeof entry === "string" ? entry : entry?.type);
+    if (!type) continue;
+    normalized.push({
+      type,
+      name: sanitizeWishlistLabel(typeof entry === "string" ? "" : entry?.name)
+    });
+  }
+  return normalized;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function renderWishlistEditor() {
   const root = byId("wishlistEditor");
   if (!uiState.wishlist.length) {
@@ -147,14 +182,23 @@ function renderWishlistEditor() {
 
   let charCount = 0;
   let weaponCount = 0;
-  root.innerHTML = uiState.wishlist.map((item, index) => `
+  root.innerHTML = uiState.wishlist.map((item, index) => {
+    if (item.type === "character") charCount += 1;
+    else weaponCount += 1;
+    const defaultLabel = item.type === "character" ? `Character ${charCount}` : `Weapon ${weaponCount}`;
+    return `
     <div class="wishlist-row">
-      <div class="wishlist-index">${
-        item === "character"
-          ? `Character ${++charCount}`
-          : `Weapon ${++weaponCount}`
-      }</div>
-      <div class="wishlist-type">${item} slot #${index + 1}</div>
+      <div class="wishlist-index">${item.name ? escapeHtml(item.name) : defaultLabel}</div>
+      <div class="wishlist-type">${item.type} slot #${index + 1}</div>
+      <input
+        class="wishlist-name-input"
+        type="text"
+        data-action="rename"
+        data-index="${index}"
+        maxlength="80"
+        placeholder="Rename ${item.type}..."
+        value="${escapeHtml(item.name)}"
+      />
       <div class="row-actions">
         <button class="icon-btn" type="button" data-action="up" data-index="${index}" data-tooltip="Move up">
           <i data-lucide="arrow-up"></i>
@@ -167,13 +211,14 @@ function renderWishlistEditor() {
         </button>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
   if (window.lucide) window.lucide.createIcons();
   bindStyledTooltips(root);
 }
 
 function setWishlist(nextWishlist) {
-  uiState.wishlist = normalizeWishlistList(nextWishlist);
+  uiState.wishlist = normalizeWishlistEntries(nextWishlist);
   renderWishlistEditor();
 }
 
@@ -219,14 +264,26 @@ function loadStateFromStorage() {
       .split(/\r?\n|,/)
       .map((s) => s.trim().toLowerCase())
       .filter((s) => s === "character" || s === "weapon");
-    const wishlist = normalizeWishlistList(parsed.wishlist?.length ? parsed.wishlist : legacyWishlist);
+    const legacyWishlistList = normalizeWishlistList(parsed.wishlist?.length ? parsed.wishlist : legacyWishlist);
+    const wishlistEntries = normalizeWishlistEntries(
+      Array.isArray(parsed.wishlistEntries)
+        ? parsed.wishlistEntries
+        : legacyWishlistList.map((type, index) => ({
+          type,
+          name: Array.isArray(parsed.wishlistNames) ? parsed.wishlistNames[index] : ""
+        }))
+    );
+    const wishlist = wishlistEntries.map((entry) => entry.type);
+    const wishlistNames = wishlistEntries.map((entry) => entry.name);
     return {
       ...DEFAULT_STATE,
       ...parsed,
       fourStarRateups: normalizeRateupList(parsed.fourStarRateups),
       charDupes: { ...DEFAULT_STATE.charDupes, ...(parsed.charDupes || {}) },
       fourStarDupes: { ...DEFAULT_STATE.fourStarDupes, ...(parsed.fourStarDupes || {}) },
-      wishlist
+      wishlist,
+      wishlistEntries,
+      wishlistNames
     };
   } catch {
     return { ...DEFAULT_STATE };
@@ -249,7 +306,7 @@ function writeStateToUI(state) {
   byId("fourStarRateup1").value = state.fourStarRateups?.[0] || "none";
   byId("fourStarRateup2").value = state.fourStarRateups?.[1] || "none";
   byId("fourStarRateup3").value = state.fourStarRateups?.[2] || "none";
-  setWishlist(state.wishlist || []);
+  setWishlist(state.wishlistEntries?.length ? state.wishlistEntries : state.wishlist || []);
 
   for (const n of STANDARD_FIVE_STARS) byId(`char-${n}`).value = String(clampInt(state.charDupes[n], 0, 6));
   for (const n of FOUR_STAR_NAMES) byId(`four-${n}`).value = String(clampInt(state.fourStarDupes[n], 0, 6));
@@ -282,7 +339,9 @@ function normalizeStateFromUI() {
     ]),
     charDupes,
     fourStarDupes,
-    wishlist: [...uiState.wishlist]
+    wishlist: uiState.wishlist.map((entry) => entry.type),
+    wishlistEntries: uiState.wishlist.map((entry) => ({ type: entry.type, name: entry.name })),
+    wishlistNames: uiState.wishlist.map((entry) => entry.name)
   };
 }
 
@@ -580,7 +639,10 @@ function computeWishlistGuaranteeThresholds(input) {
 
 async function runMonteCarlo(input, onProgress) {
   const iterations = input.iterations;
-  const baseSeed = hashString(JSON.stringify(input));
+  const seedInput = { ...input };
+  delete seedInput.wishlistEntries;
+  delete seedInput.wishlistNames;
+  const baseSeed = hashString(JSON.stringify(seedInput));
   const completionPulls = [];
   const allPulls = [];
   const itemCounts = new Array(input.wishlist.length).fill(0);
@@ -702,9 +764,11 @@ function renderWishlistTable(input, result) {
   let rows = "";
   for (let i = 0; i < input.wishlist.length; i += 1) {
     const p = result.itemProbabilities[i];
+    const customName = sanitizeWishlistLabel(input.wishlistNames?.[i]);
+    const itemLabel = customName || input.wishlist[i];
     rows += `<tr>
       <td>${i + 1}</td>
-      <td>${input.wishlist[i]}</td>
+      <td>${escapeHtml(itemLabel)}</td>
       <td>${formatNumber(p.marginal * 100)}%</td>
       <td>${formatNumber(p.joint * 100)}%</td>
       <td>${result.guaranteeThresholds[i]}</td>
@@ -1065,9 +1129,18 @@ function init() {
   byId("useAdvancedDefaults").addEventListener("change", toggleAdvancedFields);
   bindChartHover();
 
-  byId("addCharacterItemBtn").addEventListener("click", () => setWishlist([...uiState.wishlist, "character"]));
-  byId("addWeaponItemBtn").addEventListener("click", () => setWishlist([...uiState.wishlist, "weapon"]));
+  byId("addCharacterItemBtn").addEventListener("click", () => setWishlist([...uiState.wishlist, { type: "character", name: "" }]));
+  byId("addWeaponItemBtn").addEventListener("click", () => setWishlist([...uiState.wishlist, { type: "weapon", name: "" }]));
   byId("clearWishlistBtn").addEventListener("click", () => setWishlist([]));
+  byId("wishlistEditor").addEventListener("change", (event) => {
+    const input = event.target.closest("input[data-action='rename']");
+    if (!input) return;
+    const index = Number(input.dataset.index);
+    if (!Number.isInteger(index) || index < 0 || index >= uiState.wishlist.length) return;
+    const next = [...uiState.wishlist];
+    next[index] = { ...next[index], name: sanitizeWishlistLabel(input.value) };
+    setWishlist(next);
+  });
   byId("wishlistEditor").addEventListener("click", (event) => {
     const btn = event.target.closest("button[data-action]");
     if (!btn) return;
